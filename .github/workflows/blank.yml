@@ -21,7 +21,8 @@ jobs:
 
     - name: synchronize changes from submodules to main repo
       run: |
-        git submodule update --remote --merge
+        git submodule update --init --recursive
+        git submodule foreach 'git fetch origin main && git reset --hard origin/main'
         git add .
         git commit -m "synchronize changes" || echo "No changes to commit"
         git push origin main
