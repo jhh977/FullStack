@@ -1,28 +1,29 @@
-# This is a basic workflow to help you get started with Actions
-
 name: Update Submodules
 
 on:
-  schedule:
-
-    - cron: '0 0 * * *'
-  workflow_dispatch:
-
+  repository_dispatch:
+    types: [update-submodules-event]
 
 jobs:
   update-submodules:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Fullstack
+    - name: Checkout the main repository
       uses: actions/checkout@v2
       with:
-        submodules: true 
+        fetch-depth: 0  # Ensures all history is fetched including tags
 
-    - name: synchronize changes from submodules to main repo
+    - name: Update submodules
       run: |
-        git submodule update --init --recursive
-        git submodule foreach 'git fetch origin main && git reset --hard origin/main'
+        git submodule sync --recursive
+        git submodule update --init --recursive --remote --merge
+
+    - name: Commit and Push changes
+      run: |
+        git config --global user.name "github-actions"
+        git config --global user.email "github-actions@github.com"
         git add .
-        git commit -m "synchronize changes" || echo "No changes to commit"
-        git push origin main
+        git commit -m "Automatically updated submodules" || echo "No changes to commit"
+        git remote set-url origin https://${{ secrets.GITMANAGE_PAT }}@github.com/karniib/gitManage.git
+        git push || echo "Failed to push"
